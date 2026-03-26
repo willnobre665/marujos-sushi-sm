@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import FinancePage from '@/app/finance/page'
+import CrmAutomacoesPage from '@/app/crm-automacoes/page'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,10 +30,9 @@ const TICK_MS      = 10_000
 const OK_MINS      = 10
 const WARNING_MINS = 20
 
-// Value tiers — tuned for a sushi restaurant
-const VIP_ORDER_COUNT  = 5          // 5+ lifetime orders → VIP
-const VIP_SPEND_BRL    = 300_00     // R$300 lifetime → VIP (centavos)
-const HIGH_ORDER_BRL   = 80_00      // R$80 single order → "Alto valor" (centavos)
+const VIP_ORDER_COUNT  = 5
+const VIP_SPEND_BRL    = 300_00
+const HIGH_ORDER_BRL   = 80_00
 
 const EXPECTED_MINS: Record<KitchenStatus, number> = {
   new:       10,
@@ -82,16 +83,9 @@ const COLUMNS: {
 ]
 
 // ─── Priority score ───────────────────────────────────────────────────────────
-//
-// Higher = serve first.
-// Formula:
-//   time component:    elapsed minutes (raw)              → 0–∞
-//   value component:   order total in BRL                 → 0–∞  (weight ×0.5)
-//   customer bonus:    VIP +40, high-value customer +20
-//   urgency multiplier: delayed ×2, warning ×1.3, ok ×1
 
 function priorityScore(order: KitchenOrder): number {
-  const mins    = elapsedMins(order.createdAt)
+  const mins     = elapsedMins(order.createdAt)
   const orderBrl = order.total / 100
   const urgency  = getUrgency(order.createdAt, order.status)
 
@@ -396,7 +390,6 @@ function Column({
   advancing:     string | null
   newDelayedIds: Set<string>
 }) {
-  // Sort by priority score descending — highest first
   const sorted = useMemo(
     () => [...orders].sort((a, b) => priorityScore(b) - priorityScore(a)),
     [orders],
@@ -415,7 +408,6 @@ function Column({
 
   return (
     <div className="flex flex-col gap-3 w-full">
-      {/* Column header */}
       <div className={`rounded-xl ${col.headerBg}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <span className={`text-sm font-black tracking-widest ${col.headerText}`}>
@@ -446,7 +438,6 @@ function Column({
         )}
       </div>
 
-      {/* Cards */}
       {sorted.length === 0 ? (
         <div className="flex items-center justify-center py-10 rounded-xl border-2 border-dashed border-[#1e1e1e]">
           <span className="text-[#333] text-sm">Sem pedidos</span>
@@ -502,9 +493,9 @@ function GlobalStatsBar({ orders }: { orders: KitchenOrder[] }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Kitchen Panel ────────────────────────────────────────────────────────────
 
-export default function ProductionPage() {
+function KitchenPanel() {
   useKitchenStyle()
 
   const [orders, setOrders]           = useState<KitchenOrder[]>([])
@@ -592,20 +583,15 @@ export default function ProductionPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F0E8]">
-
-      <header className="sticky top-0 z-20 bg-[#0A0A0A] border-b border-[#1a1a1a] px-4 py-3 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-black tracking-wide">Cozinha</h1>
-          <p className="text-sm text-[#8A8A8A]">
-            {loading
-              ? 'Carregando…'
-              : error
-              ? error
-              : `${activeOrders.length} pedido${activeOrders.length !== 1 ? 's' : ''} ativo${activeOrders.length !== 1 ? 's' : ''}${updatedLabel ? ` · ${updatedLabel}` : ''}`}
-          </p>
-        </div>
-
+    <>
+      <div className="sticky top-[89px] z-20 bg-[#0A0A0A] border-b border-[#1a1a1a] px-4 py-3 flex items-center justify-between gap-3">
+        <p className="text-sm text-[#8A8A8A]">
+          {loading
+            ? 'Carregando…'
+            : error
+            ? error
+            : `${activeOrders.length} pedido${activeOrders.length !== 1 ? 's' : ''} ativo${activeOrders.length !== 1 ? 's' : ''}${updatedLabel ? ` · ${updatedLabel}` : ''}`}
+        </p>
         <button
           onClick={fetchOrders}
           disabled={loading}
@@ -613,7 +599,7 @@ export default function ProductionPage() {
         >
           Atualizar
         </button>
-      </header>
+      </div>
 
       <GlobalStatsBar orders={orders} />
 
@@ -636,6 +622,57 @@ export default function ProductionPage() {
           </div>
         ))}
       </main>
+    </>
+  )
+}
+
+// ─── Production Shell ─────────────────────────────────────────────────────────
+
+type ProductionTab = 'kitchen' | 'finance' | 'remarketing'
+
+const PROD_TABS: { id: ProductionTab; label: string }[] = [
+  { id: 'kitchen',     label: 'Cozinha'     },
+  { id: 'finance',     label: 'Financeiro'  },
+  { id: 'remarketing', label: 'Remarketing' },
+]
+
+export default function ProductionPage() {
+  const [tab, setTab] = useState<ProductionTab>('kitchen')
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F0E8]">
+
+      {/* Shell header */}
+      <div className="sticky top-0 z-30 bg-[#0A0A0A] border-b border-[#1a1a1a]">
+        <div className="px-4 pt-4 pb-0 flex items-center gap-3">
+          <h1 className="text-xl font-black tracking-wide">Operacional</h1>
+          <span className="text-xs text-[#8A8A8A]">Marujos Sushi</span>
+        </div>
+
+        {/* Tab bar */}
+        <nav className="flex px-4 mt-3 overflow-x-auto">
+          {PROD_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`
+                shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors
+                ${tab === t.id
+                  ? 'border-[#C9A84C] text-[#C9A84C]'
+                  : 'border-transparent text-[#8A8A8A] hover:text-[#F5F0E8]'}
+              `}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab content */}
+      {tab === 'kitchen'     && <KitchenPanel />}
+      {tab === 'finance'     && <FinancePage />}
+      {tab === 'remarketing' && <CrmAutomacoesPage />}
+
     </div>
   )
 }
