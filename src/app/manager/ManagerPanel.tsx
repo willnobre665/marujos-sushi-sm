@@ -43,11 +43,14 @@ function daysLabel(days: number | null): string {
 // ─── Segment config ───────────────────────────────────────────────────────────
 
 const SEGMENT_STYLE: Record<CustomerSegment, { label: string; color: string; bg: string }> = {
-  vip:     { label: 'VIP',      color: '#C9A84C', bg: 'rgba(201,168,76,0.12)' },
-  hot:     { label: 'Quente',   color: '#fb923c', bg: 'rgba(251,146,60,0.12)' },
-  new:     { label: 'Novo',     color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-  at_risk: { label: 'Em risco', color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  none:    { label: '',         color: '#555',    bg: 'transparent' },
+  vip:          { label: 'VIP',        color: '#C9A84C', bg: 'rgba(201,168,76,0.12)'  },
+  frequente:    { label: 'Frequente',  color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+  novo:         { label: 'Novo',       color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
+  ativo:        { label: 'Ativo',      color: '#4ade80', bg: 'rgba(74,222,128,0.12)'  },
+  dias_20_30:   { label: '20–30 dias', color: '#fb923c', bg: 'rgba(251,146,60,0.12)'  },
+  dias_30_45:   { label: '30–45 dias', color: '#f97316', bg: 'rgba(249,115,22,0.12)'  },
+  dias_50_plus: { label: '50+ dias',   color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+  none:         { label: '',           color: '#555',    bg: 'transparent'             },
 }
 
 function SegmentBadge({ segment }: { segment: CustomerSegment }) {
@@ -230,10 +233,13 @@ function buildListUrl(f: Filters, page: number): string {
 // ─── Quick filter pills ───────────────────────────────────────────────────────
 
 const QUICK_FILTERS: { label: string; segment: string; color: string }[] = [
-  { label: 'VIP',      segment: 'vip',     color: '#C9A84C' },
-  { label: 'Quente',   segment: 'hot',     color: '#fb923c' },
-  { label: 'Novos',    segment: 'new',     color: '#60a5fa' },
-  { label: 'Em risco', segment: 'at_risk', color: '#f87171' },
+  { label: 'VIP',        segment: 'vip',          color: '#C9A84C' },
+  { label: 'Frequente',  segment: 'frequente',    color: '#a78bfa' },
+  { label: 'Novo',       segment: 'novo',         color: '#60a5fa' },
+  { label: 'Ativo',      segment: 'ativo',        color: '#4ade80' },
+  { label: '20–30 dias', segment: 'dias_20_30',   color: '#fb923c' },
+  { label: '30–45 dias', segment: 'dias_30_45',   color: '#f97316' },
+  { label: '50+ dias',   segment: 'dias_50_plus', color: '#f87171' },
 ]
 
 function QuickFilters({ active, onSelect }: {
@@ -385,8 +391,8 @@ function CustomerTable({ customers, onSelect }: {
         <tbody>
           {customers.map((c) => {
             const isHovered = hovered === c.phone
-            const riskColor = c.daysSinceLastOrder !== null && c.daysSinceLastOrder > 15
-              ? '#f87171' : c.daysSinceLastOrder !== null && c.daysSinceLastOrder > 7
+            const riskColor = c.daysSinceLastOrder !== null && c.daysSinceLastOrder > 45
+              ? '#f87171' : c.daysSinceLastOrder !== null && c.daysSinceLastOrder > 20
               ? '#fb923c' : '#888'
 
             return (

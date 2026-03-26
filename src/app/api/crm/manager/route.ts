@@ -9,7 +9,7 @@
  *
  * List query params:
  *   ?consent=transactional|relational|promotional|none
- *   ?segment=vip|warm|new|at_risk   — computed segment filter
+ *   ?segment=vip|frequente|ativo|dias_20_30|dias_30_45|dias_50_plus|novo
  *   ?minOrders=N
  *   ?source=instagram|qr|google|whatsapp|direct
  *   ?campaign=<utm_campaign substring>
@@ -19,11 +19,14 @@
  *   ?limit=N            — default 50, max 200
  *   ?sort=last_order|order_count|total_spent   — default last_order
  *
- * Segmentation rules (computed from DB fields, not stored tags):
- *   vip      — order_count >= 3 OR total_spent_centavos >= 10000
- *   hot      — order_count >= 2 AND not VIP
- *   new      — order_count = 1
- *   at_risk  — last_order_at < now() - 15 days (and has ordered at least once)
+ * Segmentation rules (priority order — higher overrides lower):
+ *   vip         — order_count >= 5 (overrides all)
+ *   frequente   — order_count 2–4 (overrides time segments)
+ *   novo        — order_count = 1 (first purchase)
+ *   ativo       — last_order_at within 0–20 days
+ *   dias_20_30  — last_order_at 20–30 days ago
+ *   dias_30_45  — last_order_at 30–45 days ago
+ *   dias_50_plus — last_order_at 50+ days ago
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -31,7 +34,7 @@ import { supabase, isSupabaseConfigured, getSupabaseConfigError } from '@/lib/su
 
 // ─── Types returned to the client ─────────────────────────────────────────────
 
-export type CustomerSegment = 'vip' | 'hot' | 'new' | 'at_risk' | 'none'
+export type CustomerSegment = 'vip' | 'frequente' | 'ativo' | 'dias_20_30' | 'dias_30_45' | 'dias_50_plus' | 'novo' | 'none'
 
 export interface ManagerCliente {
   phone: string
@@ -181,9 +184,12 @@ function readAttribution(raw: unknown): NormalizedAttr {
 
 // ─── Segmentation helpers ─────────────────────────────────────────────────────
 
-const VIP_MIN_ORDERS  = 3
-const VIP_MIN_SPEND   = 10000   // centavos
-const AT_RISK_DAYS    = 15
+const VIP_MIN_ORDERS       = 5
+const FREQUENTE_MIN_ORDERS = 2   // 2–4 orders = frequente
+const DAYS_ATIVO           = 20
+const DAYS_20_30           = 30
+const DAYS_30_45           = 45
+const DAYS_50_PLUS         = 50
 
 function computeSegment(row: {
   order_count: number
@@ -192,23 +198,25 @@ function computeSegment(row: {
 }): CustomerSegment {
   if (row.order_count === 0) return 'none'
 
-  // VIP overrides all other segments
-  const isVip = row.order_count >= VIP_MIN_ORDERS || row.total_spent_centavos >= VIP_MIN_SPEND
-  if (isVip) return 'vip'
+  // VIP: 5+ orders — overrides everything
+  if (row.order_count >= VIP_MIN_ORDERS) return 'vip'
 
-  // At risk: inactive for more than AT_RISK_DAYS (checked before hot/new so inactivity wins)
+  // Frequente: 2–4 orders — overrides time-based segments
+  if (row.order_count >= FREQUENTE_MIN_ORDERS) return 'frequente'
+
+  // First purchase — no time threshold applies
+  if (row.order_count === 1) return 'novo'
+
+  // Time-based (order_count >= 2 already handled above, so this is the fallthrough)
   if (row.last_order_at) {
-    const daysDiff = (Date.now() - new Date(row.last_order_at).getTime()) / 86_400_000
-    if (daysDiff > AT_RISK_DAYS) return 'at_risk'
+    const days = (Date.now() - new Date(row.last_order_at).getTime()) / 86_400_000
+    if (days <= DAYS_ATIVO)    return 'ativo'
+    if (days <= DAYS_20_30)    return 'dias_20_30'
+    if (days <= DAYS_30_45)    return 'dias_30_45'
+    if (days >= DAYS_50_PLUS)  return 'dias_50_plus'
   }
 
-  // Hot: 2+ orders, not VIP, not at risk
-  if (row.order_count >= 2) return 'hot'
-
-  // New: exactly 1 order
-  if (row.order_count === 1) return 'new'
-
-  return 'none'
+  return 'ativo'
 }
 
 function daysSince(iso: string | null): number | null {
@@ -338,20 +346,25 @@ async function handleList(req: NextRequest): Promise<NextResponse> {
 
   // Segment pre-filter — push as much as possible to the DB
   if (segment === 'vip') {
-    query = query.or(`order_count.gte.${VIP_MIN_ORDERS},total_spent_centavos.gte.${VIP_MIN_SPEND}`)
-  } else if (segment === 'hot') {
-    // >=2 orders, exclude VIP, exclude at-risk (last order within cutoff)
-    const hotCutoff = new Date(Date.now() - AT_RISK_DAYS * 86_400_000).toISOString()
-    query = query
-      .gte('order_count', 2)
-      .lt('order_count', VIP_MIN_ORDERS)
-      .lt('total_spent_centavos', VIP_MIN_SPEND)
-      .gte('last_order_at', hotCutoff)
-  } else if (segment === 'new') {
+    query = query.gte('order_count', VIP_MIN_ORDERS)
+  } else if (segment === 'frequente') {
+    query = query.gte('order_count', FREQUENTE_MIN_ORDERS).lt('order_count', VIP_MIN_ORDERS)
+  } else if (segment === 'novo') {
     query = query.eq('order_count', 1)
-  } else if (segment === 'at_risk') {
-    const cutoff = new Date(Date.now() - AT_RISK_DAYS * 86_400_000).toISOString()
-    query = query.lt('last_order_at', cutoff).gt('order_count', 0)
+  } else if (segment === 'ativo') {
+    const cutoff = new Date(Date.now() - DAYS_ATIVO * 86_400_000).toISOString()
+    query = query.gte('last_order_at', cutoff).eq('order_count', 1)
+  } else if (segment === 'dias_20_30') {
+    const from = new Date(Date.now() - DAYS_20_30 * 86_400_000).toISOString()
+    const to   = new Date(Date.now() - DAYS_ATIVO  * 86_400_000).toISOString()
+    query = query.gte('last_order_at', from).lt('last_order_at', to).eq('order_count', 1)
+  } else if (segment === 'dias_30_45') {
+    const from = new Date(Date.now() - DAYS_30_45 * 86_400_000).toISOString()
+    const to   = new Date(Date.now() - DAYS_20_30  * 86_400_000).toISOString()
+    query = query.gte('last_order_at', from).lt('last_order_at', to).eq('order_count', 1)
+  } else if (segment === 'dias_50_plus') {
+    const cutoff = new Date(Date.now() - DAYS_50_PLUS * 86_400_000).toISOString()
+    query = query.lt('last_order_at', cutoff).eq('order_count', 1)
   }
 
   if (minOrders !== undefined) query = query.gte('order_count', minOrders)
@@ -394,15 +407,25 @@ async function handleList(req: NextRequest): Promise<NextResponse> {
         .or('consent_promotional.is.null,consent_promotional.eq.false')
     }
     if (segment === 'vip') {
-      fbQuery = fbQuery.or(`order_count.gte.${VIP_MIN_ORDERS},total_spent_centavos.gte.${VIP_MIN_SPEND}`)
-    } else if (segment === 'hot') {
-      const hotCutoff = new Date(Date.now() - AT_RISK_DAYS * 86_400_000).toISOString()
-      fbQuery = fbQuery.gte('order_count', 2).lt('order_count', VIP_MIN_ORDERS).lt('total_spent_centavos', VIP_MIN_SPEND).gte('last_order_at', hotCutoff)
-    } else if (segment === 'new') {
+      fbQuery = fbQuery.gte('order_count', VIP_MIN_ORDERS)
+    } else if (segment === 'frequente') {
+      fbQuery = fbQuery.gte('order_count', FREQUENTE_MIN_ORDERS).lt('order_count', VIP_MIN_ORDERS)
+    } else if (segment === 'novo') {
       fbQuery = fbQuery.eq('order_count', 1)
-    } else if (segment === 'at_risk') {
-      const cutoff = new Date(Date.now() - AT_RISK_DAYS * 86_400_000).toISOString()
-      fbQuery = fbQuery.lt('last_order_at', cutoff).gt('order_count', 0)
+    } else if (segment === 'ativo') {
+      const cutoff = new Date(Date.now() - DAYS_ATIVO * 86_400_000).toISOString()
+      fbQuery = fbQuery.gte('last_order_at', cutoff).eq('order_count', 1)
+    } else if (segment === 'dias_20_30') {
+      const from = new Date(Date.now() - DAYS_20_30 * 86_400_000).toISOString()
+      const to   = new Date(Date.now() - DAYS_ATIVO  * 86_400_000).toISOString()
+      fbQuery = fbQuery.gte('last_order_at', from).lt('last_order_at', to).eq('order_count', 1)
+    } else if (segment === 'dias_30_45') {
+      const from = new Date(Date.now() - DAYS_30_45 * 86_400_000).toISOString()
+      const to   = new Date(Date.now() - DAYS_20_30  * 86_400_000).toISOString()
+      fbQuery = fbQuery.gte('last_order_at', from).lt('last_order_at', to).eq('order_count', 1)
+    } else if (segment === 'dias_50_plus') {
+      const cutoff = new Date(Date.now() - DAYS_50_PLUS * 86_400_000).toISOString()
+      fbQuery = fbQuery.lt('last_order_at', cutoff).eq('order_count', 1)
     }
     if (minOrders !== undefined) fbQuery = fbQuery.gte('order_count', minOrders)
     if (since) fbQuery = fbQuery.gte('last_order_at', since)

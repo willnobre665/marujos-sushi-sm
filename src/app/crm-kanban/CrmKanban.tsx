@@ -153,33 +153,57 @@ interface ColumnDef {
 
 const COLUMNS: ColumnDef[] = [
   {
-    segment: 'new',
+    segment: 'novo',
     label: 'Novo',
-    description: '1 pedido',
+    description: '1º pedido',
     color: '#60a5fa',
     bg: 'rgba(96,165,250,0.07)',
     borderColor: 'rgba(96,165,250,0.25)',
   },
   {
-    segment: 'hot',
-    label: 'Recorrente',
-    description: '2+ pedidos, ativo',
-    color: '#fb923c',
-    bg: 'rgba(251,146,60,0.07)',
-    borderColor: 'rgba(251,146,60,0.25)',
+    segment: 'ativo',
+    label: 'Ativo',
+    description: '0–20 dias',
+    color: '#4ade80',
+    bg: 'rgba(74,222,128,0.07)',
+    borderColor: 'rgba(74,222,128,0.25)',
+  },
+  {
+    segment: 'frequente',
+    label: 'Frequente',
+    description: '2–4 pedidos',
+    color: '#a78bfa',
+    bg: 'rgba(167,139,250,0.07)',
+    borderColor: 'rgba(167,139,250,0.25)',
   },
   {
     segment: 'vip',
     label: 'VIP',
-    description: '3+ pedidos ou alto gasto',
+    description: '5+ pedidos',
     color: '#C9A84C',
     bg: 'rgba(201,168,76,0.07)',
     borderColor: 'rgba(201,168,76,0.25)',
   },
   {
-    segment: 'at_risk',
-    label: 'Em Risco',
-    description: 'Sem pedido há 10+ dias',
+    segment: 'dias_20_30',
+    label: '20–30 dias',
+    description: 'Reativar em breve',
+    color: '#fb923c',
+    bg: 'rgba(251,146,60,0.07)',
+    borderColor: 'rgba(251,146,60,0.25)',
+  },
+  {
+    segment: 'dias_30_45',
+    label: '30–45 dias',
+    description: 'Reativar logo',
+    color: '#f97316',
+    bg: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+  },
+  {
+    segment: 'dias_50_plus',
+    label: '50+ dias',
+    description: 'Reativação urgente',
     color: '#f87171',
     bg: 'rgba(248,113,113,0.07)',
     borderColor: 'rgba(248,113,113,0.25)',
@@ -188,24 +212,31 @@ const COLUMNS: ColumnDef[] = [
 
 // ─── Segmentation ─────────────────────────────────────────────────────────────
 
-const VIP_MIN_ORDERS = 3
-const VIP_MIN_SPEND  = 10000
-const AT_RISK_DAYS   = 10   // lowered: 10+ days without ordering = at risk
+const VIP_MIN_ORDERS       = 5
+const FREQUENTE_MIN_ORDERS = 2
+const DAYS_ATIVO           = 20
+const DAYS_50_PLUS         = 50
 
 function assignSegment(c: ManagerCliente): CustomerSegment {
   if (c.orderCount === 0) return 'none'
 
-  const isAtRisk = c.daysSinceLastOrder !== null && c.daysSinceLastOrder >= AT_RISK_DAYS
+  // VIP: 5+ orders — overrides everything
+  if (c.orderCount >= VIP_MIN_ORDERS) return 'vip'
 
-  // VIP wins over at_risk only when they're still active (< AT_RISK_DAYS)
-  // An inactive VIP goes to at_risk so they get re-engagement attention
-  if (!isAtRisk && (c.orderCount >= VIP_MIN_ORDERS || c.totalSpentCentavos >= VIP_MIN_SPEND)) return 'vip'
+  // Frequente: 2–4 orders — overrides time-based
+  if (c.orderCount >= FREQUENTE_MIN_ORDERS) return 'frequente'
 
-  // Any customer (new, hot, or vip) who hasn't ordered in AT_RISK_DAYS+ days is at risk
-  if (isAtRisk) return 'at_risk'
+  // First purchase
+  if (c.orderCount === 1) return 'novo'
 
-  if (c.orderCount >= 2) return 'hot'
-  return 'new'
+  // Time-based fallthrough
+  const days = c.daysSinceLastOrder
+  if (days === null)          return 'ativo'
+  if (days <= DAYS_ATIVO)     return 'ativo'
+  if (days <= 30)             return 'dias_20_30'
+  if (days <= 45)             return 'dias_30_45'
+  if (days >= DAYS_50_PLUS)   return 'dias_50_plus'
+  return 'ativo'
 }
 
 // ─── API ──────────────────────────────────────────────────────────────────────
@@ -221,7 +252,7 @@ async function fetchAllCustomers(): Promise<ManagerCliente[]> {
 }
 
 function groupBySegment(customers: ManagerCliente[]): BoardData {
-  const board: BoardData = { new: [], hot: [], vip: [], at_risk: [], none: [] }
+  const board: BoardData = { vip: [], frequente: [], novo: [], ativo: [], dias_20_30: [], dias_30_45: [], dias_50_plus: [], none: [] }
   for (const c of customers) {
     const seg = assignSegment(c)
     board[seg].push(c)
@@ -1272,7 +1303,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 type BoardData = Record<CustomerSegment, ManagerCliente[]>
 
 export default function CrmKanban() {
-  const [data, setData]               = useState<BoardData>({ new: [], hot: [], vip: [], at_risk: [], none: [] })
+  const [data, setData]               = useState<BoardData>({ vip: [], frequente: [], novo: [], ativo: [], dias_20_30: [], dias_30_45: [], dias_50_plus: [], none: [] })
   const [loading, setLoading]         = useState(true)
   const [error, setError]             = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState<ManagerCliente | null>(null)
