@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseServer'
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseServer'
 
 type Range = 'today' | 'week' | 'month'
 
@@ -50,6 +50,7 @@ export interface CmvSummaryResponse {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   const rangeParam = req.nextUrl.searchParams.get('range')
   const range: Range =
     rangeParam === 'week' ? 'week' :

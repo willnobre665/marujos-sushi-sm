@@ -424,10 +424,10 @@ function EntryCard({
   sendingId:     string | null
   sendErrors:    Record<string, string>
   onSend:        (id: string) => void
-  formatTs:      (ts: string) => string
+  formatTs:      (ts: string | null | undefined) => string
 }) {
-  const flow   = FLOW_CFG[entry.flow]
-  const status = STATUS_CFG[entry.status]
+  const flow   = FLOW_CFG[entry.flow]   ?? { label: entry.flow ?? 'Desconhecido', color: '#555', emoji: '?' }
+  const status = STATUS_CFG[entry.status] ?? { label: entry.status ?? 'Desconhecido', color: '#555' }
   const open   = expandedId === entry.id
 
   return (
@@ -813,12 +813,15 @@ export default function CrmAutomacoesPage() {
     }
   }
 
-  function formatTs(ts: string) {
+  function formatTs(ts: string | null | undefined) {
+    if (!ts) return '—'
+    const d = new Date(ts)
+    if (isNaN(d.getTime())) return '—'
     return new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
       day: '2-digit', month: '2-digit',
       hour: '2-digit', minute: '2-digit',
-    }).format(new Date(ts))
+    }).format(d)
   }
 
   const cardProps = { expandedId, setExpandedId, sendingId, sendErrors, onSend: sendEntry, formatTs }

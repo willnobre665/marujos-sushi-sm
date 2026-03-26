@@ -18,7 +18,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseServer'
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseServer'
 
 export interface SheetLine {
   id: string
@@ -44,6 +44,7 @@ function err(msg: string, status = 400) {
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   const productId = req.nextUrl.searchParams.get('productId')
 
   if (productId) {
@@ -122,6 +123,7 @@ export async function GET(req: NextRequest) {
 // ─── POST ─────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return err('JSON inválido') }
 

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseServer'
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseServer'
 import type { CmvIngredient } from '../route'
 import type { StockCategory } from '@/lib/stockCategories'
 
@@ -39,6 +39,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return err('JSON inválido') }
 
@@ -83,6 +84,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   const { error } = await supabase
     .from('cmv_ingredients')
     .update({ active: false })

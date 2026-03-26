@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"^export async function\\\\|^export function\" src/app/api/cmv/ingredients/route.ts src/app/api/cmv/sheets/route.ts src/app/api/cmv/stock/route.ts src/app/api/cmv/summary/route.ts src/app/api/cmv/ingredients/[id]/route.ts)",
+      "Bash(sed -n '1,7p' src/app/finance-admin/page.tsx)",
+      "Bash(sed -n '1349,1360p' src/app/finance-admin/page.tsx)",
+      "Bash(sed -n '1395,1480p' src/app/finance-admin/page.tsx)"
+    ]
+  }
+}

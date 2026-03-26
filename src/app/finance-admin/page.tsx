@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CostCategory, OwnerCost } from '@/app/api/finance-admin/costs/route'
 import type { FinanceGoal } from '@/app/api/finance-admin/goals/route'
+import { ManagerPanel } from '@/app/manager/ManagerPanel'
+import CmvPanel from '@/app/cmv/CmvPanel'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1346,13 +1348,15 @@ function GoalsTab({ period, goal, onSaved }: { period: string; goal: FinanceGoal
 // ROOT PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type Tab = 'overview' | 'results' | 'costs' | 'goals'
+type Tab = 'overview' | 'results' | 'costs' | 'goals' | 'crm' | 'cmv'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'overview',     label: 'Dashboard' },
-  { id: 'results',      label: 'DRE' },
-  { id: 'costs',  label: 'Custos' },
-  { id: 'goals',  label: 'Metas' },
+  { id: 'overview', label: 'Dashboard' },
+  { id: 'results',  label: 'DRE' },
+  { id: 'costs',    label: 'Custos' },
+  { id: 'goals',    label: 'Metas' },
+  { id: 'crm',      label: 'CRM' },
+  { id: 'cmv',      label: 'CMV' },
 ]
 
 export default function FinanceAdminPage() {
@@ -1397,13 +1401,13 @@ export default function FinanceAdminPage() {
         <div className="flex items-center justify-between px-4 pt-4 pb-3 gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest leading-none mb-0.5">
-              Financeiro
+              {tab === 'crm' ? 'CRM' : tab === 'cmv' ? 'CMV' : 'Financeiro'}
             </p>
-            <PeriodSelector period={period} onChange={setPeriod} />
+            {tab !== 'crm' && tab !== 'cmv' && <PeriodSelector period={period} onChange={setPeriod} />}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {data && (
+            {tab !== 'crm' && tab !== 'cmv' && data && (
               <div className="text-right">
                 <p className="text-xs text-[#555]">Receita</p>
                 <p className="text-sm font-black text-[#C9A84C] leading-none">
@@ -1411,10 +1415,12 @@ export default function FinanceAdminPage() {
                 </p>
               </div>
             )}
-            <button onClick={() => fetchData(period)} disabled={loading}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#111] border border-[#1e1e1e] text-[#C9A84C] text-base active:opacity-60 disabled:opacity-30">
-              {loading ? '·' : '↻'}
-            </button>
+            {tab !== 'crm' && tab !== 'cmv' && (
+              <button onClick={() => fetchData(period)} disabled={loading}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#111] border border-[#1e1e1e] text-[#C9A84C] text-base active:opacity-60 disabled:opacity-30">
+                {loading ? '·' : '↻'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1433,7 +1439,10 @@ export default function FinanceAdminPage() {
         </div>
       </header>
 
-      <main className="px-4 pb-12 pt-5">
+      {tab === 'crm' && <ManagerPanel />}
+      {tab === 'cmv' && <CmvPanel />}
+
+      <main className={tab === 'crm' || tab === 'cmv' ? 'hidden' : 'px-4 pb-12 pt-5'}>
         {error && (
           <div className="bg-red-900/40 border border-red-700/50 rounded-2xl px-4 py-3 text-sm text-red-200 mb-5">
             {error}

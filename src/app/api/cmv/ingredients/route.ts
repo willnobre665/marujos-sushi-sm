@@ -22,7 +22,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabaseServer'
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseServer'
 import type { StockCategory } from '@/lib/stockCategories'
 
 export type { StockCategory }
@@ -68,6 +68,7 @@ function err(msg: string, status = 400) {
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function GET() {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   const { data, error } = await supabase
     .from('cmv_ingredients')
     .select('*')
@@ -85,6 +86,7 @@ export async function GET() {
 // ─── POST ─────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  if (!isSupabaseConfigured()) return NextResponse.json({ error: 'supabase_not_configured' }, { status: 503 })
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return err('JSON inválido') }
 
