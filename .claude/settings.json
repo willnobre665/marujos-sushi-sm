@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'c:/Users/willi/OneDrive/Desktop/MARUJOS SUSHI/CÁRDAPIO SUSHI CLAUDE/src' -name *.jpg -o -name *.png -o -name *.webp -o -name *.avif)",
+      "Bash(powershell -Command \"Rename-Item -Path ''c:\\\\Users\\\\willi\\\\OneDrive\\\\Desktop\\\\MARUJOS SUSHI\\\\CÁRDAPIO SUSHI CLAUDE\\\\public\\\\Design sem nome \\(62\\).png'' -NewName ''logo.png''\")",
+      "Bash(powershell -Command \"Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(''C:/Users/willi/OneDrive/Desktop/MARUJOS SUSHI/CARDAPIO SUSHI CLAUDE/public/logo.png''\\); $img.Width; $img.Height; $img.Dispose\\(\\)\")",
+      "Bash(powershell -Command \"Add-Type -AssemblyName ''System.Drawing''; [System.Drawing.Image]::FromFile\\(''C:/Users/willi/OneDrive/Desktop/MARUJOS SUSHI/C\\\\u00c1RDAPIO SUSHI CLAUDE/public/logo.png''\\) | Select-Object Width,Height\")",
+      "Read(//c/Users/willi/OneDrive/Desktop/MARUJOS/ SUSHI/CÁRDAPIO/ SUSHI/ CLAUDE/src/services/**)",
+      "Bash(find 'c:/Users/willi/OneDrive/Desktop/MARUJOS SUSHI/CÁRDAPIO SUSHI CLAUDE/src' -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\))",
+      "Bash(find 'c:/Users/willi/OneDrive/Desktop/MARUJOS SUSHI/CÁRDAPIO SUSHI CLAUDE/src/services/adapters' -name *.ts)",
+      "Bash(find 'c:\\\\Users\\\\willi\\\\OneDrive\\\\Desktop\\\\MARUJOS SUSHI\\\\CÁRDAPIO SUSHI CLAUDE' -type f -name *campaign*)",
+      "Bash(xargs grep:*)",
+      "Bash(find 'c:\\\\Users\\\\willi\\\\OneDrive\\\\Desktop\\\\MARUJOS SUSHI\\\\CÁRDAPIO SUSHI CLAUDE' -name *.dbml -o -name *schema* -o -name *database*)"
+    ]
+  }
+}
