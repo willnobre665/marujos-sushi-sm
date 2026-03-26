@@ -45,9 +45,9 @@ export async function GET(req: NextRequest) {
   }
 
   // Collect unique phones to look up customer profiles in batch
-  const phones = [...new Set((data ?? []).map((r) => r.customer_phone as string).filter(Boolean))]
+  const phones = Array.from(new Set((data ?? []).map((r) => r.customer_phone as string).filter(Boolean)))
 
-  let customerMap = new Map<string, { orderCount: number; totalSpentCentavos: number }>()
+  const customerMap = new Map<string, { orderCount: number; totalSpentCentavos: number }>()
 
   if (phones.length > 0) {
     const { data: clients } = await supabase

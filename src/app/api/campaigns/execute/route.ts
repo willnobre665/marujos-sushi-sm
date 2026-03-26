@@ -205,7 +205,7 @@ async function selectAudience(
   const { data, error } = await query
 
   if (error) throw new Error(`audience query failed: ${error.message}`)
-  return (data ?? []) as Array<Record<string, unknown>>
+  return (data ?? []) as unknown as Array<Record<string, unknown>>
 }
 
 // ─── POST ─────────────────────────────────────────────────────────────────────

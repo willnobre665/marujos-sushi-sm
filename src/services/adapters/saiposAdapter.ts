@@ -50,7 +50,8 @@ export const saiposOrderAdapter: OrderAdapter = {
     return pedido
   },
 
-  async buscarPedido(_id: string): Promise<Pedido | null> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async buscarPedido(id: string): Promise<Pedido | null> {
     // GET /consultar-pedido is available but not required for the current flow.
     // Implement when the confirmation page needs live status polling.
     console.warn('[saiposAdapter] buscarPedido: not yet implemented — returning null')

@@ -1167,6 +1167,7 @@ function Tag({ text, gold = false }: { text: string; gold?: boolean }) {
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{

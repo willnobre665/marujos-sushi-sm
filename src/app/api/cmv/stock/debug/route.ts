@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     .from('cmv_sheets')
     .select('product_id, ingredient_id, quantity_used')
 
-  const allSheetPids = [...new Set((allSheets ?? []).map((r) => r.product_id as string))]
+  const allSheetPids = Array.from(new Set((allSheets ?? []).map((r) => r.product_id as string)))
   result.allProductIdsInCmvSheets = allSheetPids
 
   // ── Match analysis ─────────────────────────────────────────────────────────

@@ -21,9 +21,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseServer'
 
+export const dynamic = 'force-dynamic'
+
 // ─── Defaults (mirrors process/route.ts env-var fallbacks) ────────────────────
 
-export const SETTINGS_DEFAULTS = {
+const SETTINGS_DEFAULTS = {
   is_enabled:    true,
   batch_limit:   parseInt(process.env.AUTOMATION_BATCH_LIMIT  ?? '3',  10),
   daily_cap:     parseInt(process.env.AUTOMATION_DAILY_CAP    ?? '10', 10),
@@ -32,7 +34,8 @@ export const SETTINGS_DEFAULTS = {
   timezone:      process.env.AUTOMATION_TIMEZONE       ?? 'America/Sao_Paulo',
 }
 
-export type AutomationSettings = typeof SETTINGS_DEFAULTS
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type AutomationSettings = typeof SETTINGS_DEFAULTS
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

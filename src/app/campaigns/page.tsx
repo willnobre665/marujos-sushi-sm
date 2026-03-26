@@ -12,9 +12,16 @@ import type {
   ExecutionFlow,
   ExecutionStats,
 } from '@/app/api/campaigns/route'
-import { classifyCampaign } from '@/app/api/campaigns/route'
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function classifyCampaign(spend: number | null, revenueCentavos: number): CampaignClass | null {
+  if (!spend || spend === 0) return null
+  const roas = revenueCentavos / spend
+  if (roas === 0) return 'testing'
+  if (roas < 1)   return 'losing'
+  if (roas < 3)   return 'scaling'
+  return 'profitable'
+}
 
 function brl(centavos: number): string {
   return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -986,6 +993,7 @@ function EditDrawer({
   onClose: () => void
   onSaved: (updated: Campaign) => void
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [form, setForm] = useState<FormState>(campaignToForm(campaign))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)

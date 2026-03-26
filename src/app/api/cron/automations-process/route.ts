@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { processPendingAutomations } from '@/app/api/crm/automations/process/route'
+import { processPendingAutomations } from '@/lib/automationProcessor'
 
 export async function GET(req: NextRequest) {
   // Vercel Cron auth: Authorization: Bearer <CRON_SECRET>

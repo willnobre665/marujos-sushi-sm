@@ -275,7 +275,7 @@ export async function GET(req: NextRequest) {
   }
 
   // We need the costMap for campaign CMV — re-derive it
-  let campaignCostMap = new Map<string, number>()
+  const campaignCostMap = new Map<string, number>()
 
   if (soldMap.size > 0) {
     const productIds = Array.from(soldMap.keys())

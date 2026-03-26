@@ -1,16 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/automations-run",
-      "schedule": "0,15,30,45 * * * *"
-    },
-    {
-      "path": "/api/cron/automations-process",
-      "schedule": "5,20,35,50 * * * *"
-    },
-    {
-      "path": "/api/cron/automations-recover",
-      "schedule": "10,40 * * * *"
-    }
-  ]
-}
+{}

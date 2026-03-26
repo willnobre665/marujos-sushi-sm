@@ -20,6 +20,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseServer'
 
+export const dynamic = 'force-dynamic'
+
 function extractAvgTicket(triggerData: Record<string, unknown> | null): number {
   if (!triggerData) return 0
   const total  = triggerData.totalSpentCentavos as number | undefined

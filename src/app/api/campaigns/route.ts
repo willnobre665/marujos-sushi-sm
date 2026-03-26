@@ -89,15 +89,6 @@ export interface Campaign {
 
 export type CampaignClass = 'testing' | 'scaling' | 'profitable' | 'losing'
 
-/** Classify a campaign based on ROAS. Returns null when spend is unknown. */
-export function classifyCampaign(spend: number | null, revenueCentavos: number): CampaignClass | null {
-  if (!spend || spend === 0) return null
-  const roas = revenueCentavos / spend
-  if (roas === 0)   return 'testing'
-  if (roas < 1)     return 'losing'
-  if (roas < 3)     return 'scaling'
-  return 'profitable'
-}
 
 export interface CampaignMetrics {
   impactedCustomers: number

@@ -18,6 +18,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseServer'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const now      = new Date()
   const hourAgo  = new Date(now); hourAgo.setUTCHours(hourAgo.getUTCHours() - 1)

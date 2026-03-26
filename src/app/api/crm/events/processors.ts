@@ -157,7 +157,8 @@ export async function processOptIn(event: ValidatedCrmEvent): Promise<void> {
     relational:    'relational',
     promotional:   'promotional',
   }
-  prefs[catMap[category]] = record
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(prefs as any)[catMap[category]] = record
 
   await adapter.salvarCliente({ ...existing, preferencias: prefs, lastSeenAt: event.ts })
 
@@ -187,7 +188,8 @@ export async function processOptOut(event: ValidatedCrmEvent): Promise<void> {
     relational:    'relational',
     promotional:   'promotional',
   }
-  prefs[catMap[category]] = record
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(prefs as any)[catMap[category]] = record
 
   await adapter.salvarCliente({ ...existing, preferencias: prefs, lastSeenAt: event.ts })
 
