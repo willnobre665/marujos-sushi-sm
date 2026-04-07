@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ManagerCliente, CustomerSegment, ManagerListResponse } from '@/app/api/crm/manager/route'
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
