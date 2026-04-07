@@ -116,7 +116,7 @@ export function ProductCard({ produto }: Props) {
           {/* ── Imagem ──────────────────────────────────────────────────────── */}
           <div
             className="relative w-full overflow-hidden"
-            style={{ height: '220px', backgroundColor: ph.bg }}
+            style={{ aspectRatio: '4/3', backgroundColor: ph.bg }}
           >
             <ImageWithFallback
               src={produto.imagens[0] ?? ''}
