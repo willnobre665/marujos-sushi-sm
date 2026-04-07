@@ -23,24 +23,9 @@ export const products: Produto[] = [
   },
 
   // ─── MAIS PEDIDOS (cat-mais-pedidos) ──────────────────────────────────────
-  // Temaki Pistache, Hot Canoa Pistache, Combo Universitário and Combo Salmão
-  {
-    id: 'prod-mais-pedidos-temaki-pistache',
-    nome: 'Temaki Pistache',
-    slug: 'mais-pedidos-temaki-pistache',
-    descricao: 'Cone de alga com recheio especial de pistache.',
-    descricaoResumida: 'Cone de alga com pistache',
-    preco: 4000,
-    categoriaId: 'cat-mais-pedidos',
-    imagens: ['/images/TEMAKI PISTACHE.jpg'],
-    tags: ['popular', 'destaque-chef'],
-    alergenos: ['gluten', 'frutos-do-mar', 'sesamo'],
-    produtosComplementares: ['prod-refrigerante', 'prod-agua'],
-    produtosRelacionados: ['prod-temaki-salmao'],
-    disponivel: true,
-    destaqueNaCategoria: true,
-    ordemExibicao: 1,
-  },
+  // Hot Canoa Pistache — unique to this section (no canonical in cat-hot)
+  // Temaki Pistache, Combo Universitário and Combo Salmão appear in their own
+  // categories below (cat-temakis, cat-combos-novos) — no copies needed here
   {
     id: 'prod-mais-pedidos-hot-canoa-pistache',
     nome: 'Hot Canoa Pistache',
@@ -55,42 +40,8 @@ export const products: Produto[] = [
     produtosComplementares: ['prod-refrigerante', 'prod-agua'],
     produtosRelacionados: [],
     disponivel: true,
-    destaqueNaCategoria: false,
-    ordemExibicao: 2,
-  },
-  {
-    id: 'prod-mais-pedidos-combo-universitario',
-    nome: 'Combo Universitário',
-    slug: 'mais-pedidos-combo-universitario',
-    descricao: '29 peças selecionadas. Combinação ideal para 1 pessoa.',
-    descricaoResumida: '29 peças selecionadas',
-    preco: 11000,
-    categoriaId: 'cat-mais-pedidos',
-    imagens: ['https://images.unsplash.com/photo-1553621042-f6e147245754?w=600&q=80'],
-    tags: ['popular'],
-    alergenos: ['gluten', 'frutos-do-mar', 'soja', 'sesamo'],
-    produtosComplementares: ['prod-refrigerante', 'prod-agua'],
-    produtosRelacionados: ['prod-combo-familia', 'prod-combo-kyoto'],
-    disponivel: true,
-    destaqueNaCategoria: false,
-    ordemExibicao: 3,
-  },
-  {
-    id: 'prod-mais-pedidos-combo-salmao',
-    nome: 'Combo Salmão',
-    slug: 'mais-pedidos-combo-salmao',
-    descricao: '40 peças de salmão. Para compartilhar.',
-    descricaoResumida: '40 peças de salmão',
-    preco: 14500,
-    categoriaId: 'cat-mais-pedidos',
-    imagens: ['/images/COMBO SALMÃO.png'],
-    tags: ['destaque-chef'],
-    alergenos: ['gluten', 'lactose', 'frutos-do-mar', 'soja', 'sesamo'],
-    produtosComplementares: ['prod-refrigerante', 'prod-agua'],
-    produtosRelacionados: ['prod-combo-kyoto', 'prod-combo-executivo'],
-    disponivel: true,
-    destaqueNaCategoria: false,
-    ordemExibicao: 4,
+    destaqueNaCategoria: true,
+    ordemExibicao: 1,
   },
 
   // ─── COMBOS (cat-combos-novos) ─────────────────────────────────────────────
