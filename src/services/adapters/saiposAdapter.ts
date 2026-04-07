@@ -32,6 +32,7 @@ export const saiposOrderAdapter: OrderAdapter = {
       'items:', dados.itens.length,
     )
 
+    console.log('[saiposAdapter] calling fetch POST /api/orders')
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

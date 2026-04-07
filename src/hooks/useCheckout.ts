@@ -35,7 +35,7 @@ export function useCheckout() {
     observacaoGeral?: string,
     endereco?: EnderecoEntrega,
   ) => {
-    console.log('[useCheckout] confirmarPedido called — cliente:', cliente, 'mesa:', mesa)
+    console.log('[useCheckout] confirmarPedido called — mesa:', mesa, 'items:', itens.length)
     setLoading(true)
     setError(null)
 

@@ -44,8 +44,6 @@ export interface SaiposPaymentType {
   code: SaiposPaymentCode
   amount: number        // reais, decimal
   change_for: number    // reais — troco target; set to 0 when not cash
-  complement: string    // must match the string in Saipos back-office; "" for auto-match
-  type: 'ONLINE' | 'OFFLINE'
 }
 
 // ─── Order items ──────────────────────────────────────────────────────────────
@@ -68,17 +66,27 @@ export interface SaiposItem {
   choice_items: SaiposChoiceItem[]
 }
 
+// ─── Delivery address ─────────────────────────────────────────────────────────
+
+export interface SaiposDeliveryAddress {
+  street_name: string        // logradouro
+  street_number: string      // número
+  district: string           // bairro
+  reference?: string         // ponto de referência
+}
+
 // ─── Order method ─────────────────────────────────────────────────────────────
 
 export type SaiposOrderMode = 'TABLE' | 'TAKEOUT' | 'DELIVERY' | 'TICKET'
 
 export interface SaiposOrderMethod {
   mode: SaiposOrderMode
-  table_reference: string    // table number/name, e.g. "5" or "Varanda"
-  desc_sale?: string         // optional description displayed in POS
   scheduled: boolean
-  delivery_date_time: null
-  pickupCode: null
+  delivery_date_time: string | null
+  pickupCode: string | null
+  delivery_by?: 'PARTNER' | 'RESTAURANT'  // required for DELIVERY
+  address?: SaiposDeliveryAddress           // required when delivery_by === 'RESTAURANT'
+  desc_sale?: string
 }
 
 // ─── Table ────────────────────────────────────────────────────────────────────
@@ -112,12 +120,10 @@ export interface SaiposCriarPedidoRequest {
   cod_store: string          // store identifier provided by Saipos at credentialing
   created_at: string         // ISO 8601 with timezone, e.g. "2026-03-24T19:30:00-03:00"
   notes?: string             // general order observation
-  total_discount: number     // reais — 0 when no discount
-  total_increase: number     // reais — 0 when no surcharge
   total_amount: number       // reais — final amount charged to the customer
   customer: SaiposCustomer
   order_method: SaiposOrderMethod
-  table: SaiposTable
+  table?: SaiposTable        // only for TABLE mode
   items: SaiposItem[]
   payment_types: SaiposPaymentType[]
 }

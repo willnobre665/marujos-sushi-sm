@@ -49,8 +49,12 @@ export function CardapioClient({ categorias, produtosPorCategoria, combos }: Pro
     }
   }
 
-  // Categorias sem combos (combos ficam no destaque separado)
-  const categoriasRestantes = categorias.filter((c) => c.slug !== 'combos')
+  // Promoções — banner section (cat-combos / slug promocoes)
+  const promocoes = produtosPorCategoria['promocoes'] ?? []
+
+  // All categories except promocoes — rendered in ordemExibicao order (Mais Pedidos, Combos, ...)
+  // combos products come from the `combos` prop passed by page.tsx
+  const categoriasRestantes = categorias.filter((c) => c.slug !== 'promocoes')
 
   return (
     <>
@@ -61,15 +65,18 @@ export function CardapioClient({ categorias, produtosPorCategoria, combos }: Pro
         onSelect={handleSelectCategoria}
       />
 
-      {/* Destaque de Combos — primeira dobra após os chips */}
-      <ComboDestaque combos={combos} />
+      {/* 1 — Promoções: banner-style horizontal scroll */}
+      <ComboDestaque promocoes={promocoes} />
 
-      {/* Divisor — espaço entre combos e restante do cardápio */}
+      {/* Divisor */}
       <div className="mx-4 mt-5 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
 
-      {/* Blocos de categoria restantes */}
+      {/* 2 — Mais Pedidos → 3 — Combos → rest, in ordemExibicao order */}
       {categoriasRestantes.map((cat) => {
-        const produtos = produtosPorCategoria[cat.slug] ?? []
+        // Combos products come from the dedicated prop (cat-combos-novos)
+        const produtos = cat.slug === 'combos'
+          ? combos
+          : (produtosPorCategoria[cat.slug] ?? [])
         return (
           <CategorySection
             key={cat.id}

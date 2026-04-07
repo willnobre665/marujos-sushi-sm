@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const PUBLIC_PATHS = ['/', '/login', '/cardapio', '/carrinho', '/checkout', '/confirmacao', '/pesquisa']
+const PUBLIC_PATHS = ['/', '/login', '/cardapio', '/carrinho', '/checkout', '/confirmacao', '/pesquisa', '/institucional']
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
@@ -21,6 +21,7 @@ export function middleware(req: NextRequest) {
   if (!req.cookies.has('sb-session')) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
+    url.searchParams.set('from', pathname)
     return NextResponse.redirect(url)
   }
 

@@ -33,23 +33,18 @@ const PAGAMENTO_CODE: Record<FormaPagamento, SaiposPaymentCode> = {
   va:      'VALE',
 }
 
-// complement must match the exact string configured in Saipos "Canais de venda".
-// Leave as "" for Saipos to auto-match. Set to "PIX" if you have a named Pix method.
-const PAGAMENTO_COMPLEMENT: Partial<Record<FormaPagamento, string>> = {
-  pix: 'PIX',
-  vr:  'VALE REFEIÇÃO',
-  va:  'VALE ALIMENTAÇÃO',
-}
-
-// Online methods (already settled before arriving at the restaurant).
-// TABLE-mode orders are always OFFLINE — customer pays at the table.
-const PAGAMENTO_TYPE: Partial<Record<FormaPagamento, 'ONLINE' | 'OFFLINE'>> = {}
 
 // ─── Product / option code overrides ─────────────────────────────────────────
 
 // Add entries when the code registered in Saipos back-office differs from product.id.
 // Example: { 'combo-executivo': 'COMBO001' }
-const PRODUCT_CODE_MAP: Record<string, string> = {}
+const PRODUCT_CODE_MAP: Record<string, string> = {
+  'prod-combo-executivo':      '24132156', // Combo Universitário | 29 Peças |
+  'prod-combo-premium':        '26181083', // Combo Yugen | 27 Peças |
+  'prod-combo-familia':        '23682154', // Combo Salmão | 40 Peças |
+  'prod-temaki-salmao':        '23636379', // Temaki Filadelfia
+  'prod-uramaki-philadelphia': '23636389', // Uramaki Filadelfia
+}
 
 // Add entries when an option label in the UI differs from the code in Saipos.
 // Example: { '16 peças': 'OPC-16PC' }
@@ -66,15 +61,13 @@ function buildPaymentType(
   trocoPara?: number,
 ): SaiposPaymentType {
   const code = PAGAMENTO_CODE[formaPagamento]
-  const complement = PAGAMENTO_COMPLEMENT[formaPagamento] ?? ''
-  const type = PAGAMENTO_TYPE[formaPagamento] ?? 'OFFLINE'
 
   const change_for =
     formaPagamento === 'dinheiro' && trocoPara !== undefined
       ? centavosParaReais(trocoPara)
       : 0
 
-  return { code, amount: totalReais, change_for, complement, type }
+  return { code, amount: totalReais, change_for }
 }
 
 function buildItems(novoPedido: NovoPedido): SaiposItem[] {
@@ -129,40 +122,48 @@ export function buildSaiposPayload(
 ): SaiposCriarPedidoRequest {
   const subtotalCentavos = novoPedido.itens.reduce((acc, i) => acc + i.precoTotal, 0)
   const totalReais = centavosParaReais(subtotalCentavos)
-  const mesa = novoPedido.mesa ?? ''
+  const isDelivery = Boolean(novoPedido.endereco)
+
+  const order_method = isDelivery
+    ? {
+        mode: 'DELIVERY' as const,
+        scheduled: false,
+        delivery_date_time: null,
+        pickupCode: null,
+        delivery_by: 'RESTAURANT' as const,
+        address: {
+          street_name:   novoPedido.endereco!.logradouro,
+          street_number: novoPedido.endereco!.numero,
+          district:      novoPedido.endereco!.bairro,
+          ...(novoPedido.endereco!.referencia ? { reference: novoPedido.endereco!.referencia } : {}),
+        },
+        ...(novoPedido.observacaoGeral ? { desc_sale: novoPedido.observacaoGeral } : {}),
+      }
+    : {
+        mode: 'TAKEOUT' as const,
+        scheduled: false,
+        delivery_date_time: null,
+        pickupCode: null,
+        ...(novoPedido.observacaoGeral ? { desc_sale: novoPedido.observacaoGeral } : {}),
+      }
 
   return {
-    order_id:       orderId,
-    display_id:     displayId,
-    cod_store:      codStore,
-    created_at:     criadoEm,
-    total_discount: 0,
-    total_increase: 0,
-    total_amount:   totalReais,
+    order_id:     orderId,
+    display_id:   displayId,
+    cod_store:    codStore,
+    created_at:   criadoEm,
+    total_amount: totalReais,
 
     customer: {
-      id:    novoPedido.cliente.telefone
-               ? normalizePhone(novoPedido.cliente.telefone)
-               : '-1',
-      name:  novoPedido.cliente.nome,
+      id:   '-1',
+      name: novoPedido.cliente.nome,
       ...(novoPedido.cliente.telefone
         ? { phone: normalizePhone(novoPedido.cliente.telefone) }
         : {}),
       ...(novoPedido.cliente.email ? { email: novoPedido.cliente.email } : {}),
     },
 
-    order_method: {
-      mode:               'TABLE',
-      table_reference:    mesa,
-      scheduled:          false,
-      delivery_date_time: null,
-      pickupCode:         null,
-      ...(novoPedido.observacaoGeral ? { desc_sale: novoPedido.observacaoGeral } : {}),
-    },
-
-    table: {
-      desc_table: mesa,
-    },
+    order_method,
 
     items: buildItems(novoPedido),
 

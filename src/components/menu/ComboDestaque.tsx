@@ -1,38 +1,26 @@
 import Link from 'next/link'
 import type { Produto } from '@/types/product'
-import { formatarPreco, formatarDesconto } from '@/utils/currency'
-import { ImageWithFallback } from './ImageWithFallback'
+import { formatarPreco } from '@/utils/currency'
 
 interface Props {
-  combos: Produto[]
+  promocoes: Produto[]
 }
-
-// Placeholders ricos por posição — calor dourado que evoca comida
-const placeholders = [
-  {
-    bg: '#1C1000',
-    glow: 'radial-gradient(ellipse at 35% 40%, rgba(201,168,76,0.22) 0%, rgba(160,90,20,0.12) 35%, transparent 65%), radial-gradient(ellipse at 72% 65%, rgba(140,60,10,0.10) 0%, transparent 50%)',
-  },
-  {
-    bg: '#170E00',
-    glow: 'radial-gradient(ellipse at 60% 35%, rgba(201,168,76,0.18) 0%, rgba(180,100,20,0.10) 35%, transparent 65%), radial-gradient(ellipse at 28% 70%, rgba(120,55,10,0.09) 0%, transparent 50%)',
-  },
-  {
-    bg: '#130B00',
-    glow: 'radial-gradient(ellipse at 45% 50%, rgba(201,168,76,0.16) 0%, rgba(150,80,15,0.09) 35%, transparent 65%), radial-gradient(ellipse at 78% 30%, rgba(110,50,10,0.08) 0%, transparent 50%)',
-  },
-]
 
 function IconPlus() {
   return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-      <path d="M6.5 2v9M2 6.5h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }
 
-export function ComboDestaque({ combos }: Props) {
-  if (combos.length === 0) return null
+export function ComboDestaque({ promocoes }: Props) {
+  if (promocoes.length === 0) return null
+
+  // Featured promo (Combo Yugen)
+  const comboYugen = promocoes.find((p) => p.id === 'prod-combo-premium')
+  // Remaining promos excluding the featured one
+  const outrasPromocoes = promocoes.filter((p) => p.id !== 'prod-combo-premium')
 
   return (
     <section className="pt-5 pb-2">
@@ -41,154 +29,158 @@ export function ComboDestaque({ combos }: Props) {
       <div className="flex items-center justify-between px-4 mb-4">
         <div>
           <h2 className="font-display text-ivory font-semibold italic" style={{ fontSize: '19px' }}>
-            Combos
+            Promoções
           </h2>
           <p className="text-ivory/35 font-sans mt-0.5" style={{ fontSize: '10px' }}>
-            Os mais pedidos da casa
+            Monte sua experiência completa e economize
           </p>
         </div>
-        <Link
-          href="/cardapio/combos"
-          className="text-gold/60 font-sans hover:text-gold/80 transition-colors"
-          style={{ fontSize: '11px' }}
-        >
-          Ver todos
-        </Link>
       </div>
 
-      {/* Cards em scroll horizontal */}
-      <div
-        className="flex gap-3 overflow-x-auto px-4 pb-2"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-        } as React.CSSProperties}
+      {/* ── Featured banner — Combo Yugen ─────────────────────────────────── */}
+      {comboYugen && <Link
+        href={`/cardapio/promocoes/${comboYugen.slug}`}
+        className="block mx-4 mb-3 active:scale-[0.985] transition-transform duration-150"
       >
-        {combos.map((combo, index) => {
-          const desconto = combo.precoOriginal
-            ? formatarDesconto(combo.precoOriginal, combo.preco)
-            : null
-          const isPopular = combo.tags.includes('popular')
-          const ph = placeholders[index % placeholders.length]
+        <div
+          className="relative overflow-hidden"
+          style={{
+            height: '180px',
+            borderRadius: '18px',
+            border: '1px solid rgba(201,168,76,0.20)',
+          }}
+        >
+          {/* Background image */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "url('/images/COMBO YUGEN.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          />
 
-          const FallbackImage = (
-            <div
-              className="absolute inset-0"
-              style={{ background: ph.glow, backgroundColor: ph.bg }}
-            />
-          )
+          {/* Dark gradient overlay — left to right */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%)',
+            }}
+          />
 
-          return (
+          {/* Content */}
+          <div className="absolute inset-0 flex items-center justify-between px-5">
+
+            {/* Left — text */}
+            <div className="flex flex-col gap-1">
+              <span
+                className="font-sans font-bold uppercase tracking-wider"
+                style={{ fontSize: '9px', color: '#C9A84C', letterSpacing: '0.1em' }}
+              >
+                Mais pedido
+              </span>
+              <h3
+                className="font-display text-ivory font-semibold leading-tight"
+                style={{ fontSize: '22px' }}
+              >
+                Combo Yugen
+              </h3>
+              <p
+                className="font-sans"
+                style={{ fontSize: '12px', color: 'rgba(245,240,232,0.60)' }}
+              >
+                27 peças — mais pedido
+              </p>
+              <span
+                className="font-sans font-bold text-gold mt-1"
+                style={{ fontSize: '20px' }}
+              >
+                {formatarPreco(comboYugen.preco)}
+              </span>
+            </div>
+
+            {/* Right — CTA */}
+            <span
+              className="flex items-center gap-1.5 font-sans font-bold flex-shrink-0 rounded-xl px-4 py-2.5"
+              style={{
+                fontSize: '13px',
+                backgroundColor: '#C9A84C',
+                color: '#0A0A0A',
+              }}
+            >
+              <IconPlus />
+              Pedir
+            </span>
+          </div>
+        </div>
+      </Link>}
+
+      {/* ── Other promos — horizontal scroll strip ────────────────────────── */}
+      {outrasPromocoes.length > 0 && (
+        <div
+          className="flex gap-3 overflow-x-auto px-4 pb-2"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+          } as React.CSSProperties}
+        >
+          {outrasPromocoes.map((promo) => (
             <Link
-              key={combo.id}
-              href={`/cardapio/combos/${combo.slug}`}
-              className="flex-shrink-0 active:scale-[0.97] transition-transform duration-150"
-              style={{ scrollSnapAlign: 'start', width: '260px' }}
+              key={promo.id}
+              href={`/cardapio/promocoes/${promo.slug}`}
+              className="flex-shrink-0 active:scale-[0.98] transition-transform duration-150"
+              style={{ scrollSnapAlign: 'start', width: 'min(300px, 80vw)' }}
             >
               <div
-                className="rounded-2xl overflow-hidden hover:border-gold/30 transition-all duration-200 shadow-card-hover"
-                style={{ border: '1px solid rgba(201,168,76,0.12)', backgroundColor: '#1A1400' }}
+                className="relative rounded-2xl overflow-hidden"
+                style={{ height: '160px', border: '1px solid rgba(201,168,76,0.15)' }}
               >
-
-                {/* ── Imagem ──────────────────────────────────────────────── */}
                 <div
-                  className="relative w-full overflow-hidden"
-                  style={{ height: '220px', backgroundColor: ph.bg }}
-                >
-                  <ImageWithFallback
-                    src={combo.imagens[0] ?? ''}
-                    alt={combo.nome}
-                    sizes="260px"
-                    fallback={FallbackImage}
-                  />
-
-                  {/* Gradiente inferior — funde imagem com conteúdo */}
-                  <div
-                    className="absolute bottom-0 inset-x-0"
-                    style={{
-                      height: '80px',
-                      background: 'linear-gradient(to top, #1A1400 0%, rgba(26,20,0,0.7) 50%, transparent 100%)',
-                    }}
-                  />
-
-                  {/* Badges — topo esquerdo */}
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    {desconto && (
-                      <span
-                        className="font-sans font-bold px-2.5 py-1 rounded-full"
-                        style={{ fontSize: '11px', backgroundColor: '#C9A84C', color: '#0A0A0A' }}
-                      >
-                        {desconto}
-                      </span>
-                    )}
-                    {isPopular && (
-                      <span
-                        className="backdrop-blur-sm font-sans font-medium px-2.5 py-1 rounded-full"
-                        style={{
-                          fontSize: '10px',
-                          backgroundColor: 'rgba(10,10,10,0.65)',
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          color: 'rgba(245,240,232,0.80)',
-                        }}
-                      >
-                        Mais pedido
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── Conteúdo ────────────────────────────────────────────── */}
-                <div className="px-3.5 pt-2.5 pb-3.5">
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: "url('/images/hero.jpg.png')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(2px) brightness(0.55)',
+                    transform: 'scale(1.05)',
+                  }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.35) 100%)',
+                  }}
+                />
+                <div className="absolute inset-0 flex flex-col justify-end p-4">
                   <h3
                     className="font-display text-ivory font-semibold leading-tight"
-                    style={{ fontSize: '15px' }}
+                    style={{ fontSize: '16px' }}
                   >
-                    {combo.nome}
+                    {promo.nome}
                   </h3>
-                  <p
-                    className="font-sans mt-1 line-clamp-1"
-                    style={{ fontSize: '11px', color: 'rgba(245,240,232,0.40)' }}
-                  >
-                    {combo.descricaoResumida}
-                  </p>
-
-                  {/* Preço + CTA */}
-                  <div className="flex items-center justify-between mt-3.5 gap-2">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="font-sans font-bold text-gold" style={{ fontSize: '17px' }}>
-                        {formatarPreco(combo.preco)}
-                      </span>
-                      {combo.precoOriginal && (
-                        <span
-                          className="font-sans line-through"
-                          style={{ fontSize: '11px', color: 'rgba(245,240,232,0.20)' }}
-                        >
-                          {formatarPreco(combo.precoOriginal)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* CTA — preenchido, alto contraste */}
-                    <span
-                      className="flex items-center gap-1.5 font-sans font-bold flex-shrink-0 rounded-xl px-3.5 py-2"
-                      style={{
-                        fontSize: '12px',
-                        backgroundColor: '#C9A84C',
-                        color: '#0A0A0A',
-                      }}
+                  {promo.descricaoResumida && (
+                    <p
+                      className="font-sans mt-0.5 line-clamp-1"
+                      style={{ fontSize: '11px', color: 'rgba(245,240,232,0.55)' }}
                     >
-                      <IconPlus />
-                      Pedir
-                    </span>
-                  </div>
+                      {promo.descricaoResumida}
+                    </p>
+                  )}
+                  <span
+                    className="font-sans font-bold text-gold mt-2"
+                    style={{ fontSize: '18px' }}
+                  >
+                    {formatarPreco(promo.preco)}
+                  </span>
                 </div>
               </div>
             </Link>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

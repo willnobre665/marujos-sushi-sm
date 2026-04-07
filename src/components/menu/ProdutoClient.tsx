@@ -384,7 +384,7 @@ export function ProdutoClient({ produto, upsellItem }: Props) {
             className="font-sans font-semibold mb-3 uppercase"
             style={{ fontSize: '10px', letterSpacing: '0.07em', color: 'rgba(245,240,232,0.35)' }}
           >
-            Completar com bebida
+            Peça também
           </p>
 
           <div
@@ -392,12 +392,17 @@ export function ProdutoClient({ produto, upsellItem }: Props) {
             style={{ backgroundColor: '#181818', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="flex items-center gap-3.5 px-4 py-3.5">
-              {/* Drink icon as image stand-in */}
+              {/* Product image */}
               <div
-                className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden relative"
                 style={{ backgroundColor: '#000A16' }}
               >
-                <span style={{ fontSize: '28px' }}>🥤</span>
+                <ImageWithFallback
+                  src={upsellItem.imagens[0] ?? ''}
+                  alt={upsellItem.nome}
+                  sizes="56px"
+                  fallback={<div className="absolute inset-0" style={{ backgroundColor: '#000A16' }} />}
+                />
               </div>
 
               {/* Info */}
@@ -405,9 +410,11 @@ export function ProdutoClient({ produto, upsellItem }: Props) {
                 <p className="font-sans font-semibold text-ivory leading-tight" style={{ fontSize: '14px' }}>
                   {upsellItem.nome}
                 </p>
-                <p className="font-sans mt-0.5" style={{ fontSize: '11px', color: 'rgba(245,240,232,0.38)' }}>
-                  Coca-Cola, Guaraná ou Sprite
-                </p>
+                {upsellItem.descricaoResumida && (
+                  <p className="font-sans mt-0.5" style={{ fontSize: '11px', color: 'rgba(245,240,232,0.38)' }}>
+                    {upsellItem.descricaoResumida}
+                  </p>
+                )}
                 <p className="font-sans font-bold text-gold mt-1" style={{ fontSize: '14px' }}>
                   {formatarPreco(upsellItem.preco)}
                 </p>

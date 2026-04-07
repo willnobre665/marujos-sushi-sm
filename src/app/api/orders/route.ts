@@ -28,6 +28,7 @@ import { buildSaiposPayload } from '@/services/adapters/saiposPayload'
 import { getToken, refreshToken, getBaseUrl } from '@/services/adapters/saiposAuth'
 import { gerarUUID } from '@/utils/uuid'
 import { CURRENT_OPERATION, OPERATION_LABEL } from '@/config/operation'
+import { products } from '@/data/products'
 import type { NovoPedido, Pedido, ItemPedido } from '@/types/order'
 import type { SaiposErrorResponse } from '@/types/saipos'
 
@@ -41,6 +42,54 @@ function validateEnv(): string | null {
 
 function getCodStore(): string {
   return process.env.SAIPOS_COD_STORE!
+}
+
+// ─── Input validation ─────────────────────────────────────────────────────────
+
+function validatePedido(dados: NovoPedido): string | null {
+  if (!dados.cliente?.nome || dados.cliente.nome.trim().length === 0) {
+    return 'cliente.nome is required'
+  }
+  if (dados.cliente.nome.length > 120) {
+    return 'cliente.nome must be at most 120 characters'
+  }
+  if (dados.cliente.telefone && dados.cliente.telefone.length > 15) {
+    return 'cliente.telefone must be at most 15 characters'
+  }
+  if (dados.observacaoGeral && dados.observacaoGeral.length > 500) {
+    return 'observacaoGeral must be at most 500 characters'
+  }
+  return null
+}
+
+// ─── Server-side price recalculation ─────────────────────────────────────────
+//
+// Rejects client-sent precoTotal and precoUnitario.
+// Prices are recomputed from the server-side product catalog.
+// If a product ID is not found in the catalog, the request is rejected.
+
+const productMap = new Map(products.map((p) => [p.id, p]))
+
+function recalcularPrecos(dados: NovoPedido): string | null {
+  for (const item of dados.itens) {
+    const produto = productMap.get(item.produto.id)
+    if (!produto) {
+      return `produto não encontrado no catálogo: ${item.produto.id}`
+    }
+
+    // Recalculate unit price: base price + sum of selected variation additions.
+    const adicionais = item.variacoesSelecionadas.reduce(
+      (acc, v) => acc + v.precoAdicional,
+      0,
+    )
+    const precoUnitarioReal = produto.preco + adicionais
+    const precoTotalReal = precoUnitarioReal * item.quantidade
+
+    // Overwrite client-sent prices with server-authoritative values.
+    item.precoUnitario = precoUnitarioReal
+    item.precoTotal = precoTotalReal
+  }
+  return null
 }
 
 // ─── Display ID ───────────────────────────────────────────────────────────────
@@ -72,15 +121,23 @@ async function saiposPost<T>(path: string, body: unknown): Promise<T> {
   const baseUrl = getBaseUrl()
   const url = `${baseUrl}${path}`
 
-  const doRequest = async (token: string): Promise<Response> =>
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token,   // Saipos: raw token, no "Bearer" prefix
-      },
-      body: JSON.stringify(body),
-    })
+  const doRequest = async (token: string): Promise<Response> => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 10_000)
+    try {
+      return await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,   // Saipos: raw token, no "Bearer" prefix
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timer)
+    }
+  }
 
   let token = await getToken()
   let res = await doRequest(token)
@@ -105,6 +162,7 @@ async function saiposPost<T>(path: string, body: unknown): Promise<T> {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  console.log('[POST /api/orders] request received')
   const envError = validateEnv()
   if (envError) {
     console.error('[POST /api/orders] Env validation failed:', envError)
@@ -120,6 +178,16 @@ export async function POST(req: NextRequest) {
 
   if (!dados?.itens?.length) {
     return NextResponse.json({ error: 'itens is required and must not be empty' }, { status: 400 })
+  }
+
+  const validationError = validatePedido(dados)
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 })
+  }
+
+  const priceError = recalcularPrecos(dados)
+  if (priceError) {
+    return NextResponse.json({ error: priceError }, { status: 400 })
   }
 
   const orderId   = gerarUUID()
@@ -138,12 +206,13 @@ export async function POST(req: NextRequest) {
     'total (reais):', payload.total_amount,
   )
 
-  if (process.env.SAIPOS_DEBUG === 'true') {
-    console.log('[POST /api/orders] SAIPOS_DEBUG payload →', JSON.stringify(payload, null, 2))
-  }
+  console.log('[POST /api/orders] saipos payload →', JSON.stringify({
+    ...payload,
+    customer: { ...payload.customer, phone: payload.customer.phone ? '***' : undefined, email: payload.customer.email ? '***' : undefined },
+  }, null, 2))
 
   try {
-    await saiposPost('/criar-pedido', payload)
+    await saiposPost('/order', payload)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[POST /api/orders] saiposPost failed:', message)

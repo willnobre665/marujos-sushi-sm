@@ -9,6 +9,7 @@ import type {
   CampaignStat,
   CustomerSegment,
 } from '@/app/api/crm/manager/route'
+import { RemarketingPanel } from '@/app/remarketing/RemarketingPanel'
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
@@ -673,13 +674,14 @@ function DetailDrawer({ phone, onClose }: { phone: string; onClose: () => void }
 
 // ─── Tab bar ──────────────────────────────────────────────────────────────────
 
-type Tab = 'clientes' | 'kanban' | 'campanhas' | 'automacoes'
+type Tab = 'clientes' | 'kanban' | 'campanhas' | 'automacoes' | 'remarketing'
 
 const TAB_CONFIG: { id: Tab; label: string; href?: string }[] = [
-  { id: 'clientes',   label: 'Clientes' },
-  { id: 'kanban',     label: 'Kanban',      href: '/crm-kanban' },
-  { id: 'campanhas',  label: 'Campanhas',   href: '/campaigns' },
-  { id: 'automacoes', label: 'Automações',  href: '/crm-automacoes' },
+  { id: 'clientes',    label: 'Clientes' },
+  { id: 'kanban',      label: 'Kanban',       href: '/crm-kanban' },
+  { id: 'campanhas',   label: 'Campanhas',    href: '/campaigns' },
+  { id: 'automacoes',  label: 'Automações',   href: '/crm-automacoes' },
+  { id: 'remarketing', label: 'Remarketing' },
 ]
 
 function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
@@ -778,7 +780,8 @@ export function ManagerPanel() {
       <div style={S.body}>
         <TabBar active={tab} onChange={setTab} />
 
-        {tab === 'campanhas' && <CampaignsView />}
+        {tab === 'campanhas'   && <CampaignsView />}
+        {tab === 'remarketing' && <RemarketingPanel />}
 
         {tab === 'clientes' && (
           <>

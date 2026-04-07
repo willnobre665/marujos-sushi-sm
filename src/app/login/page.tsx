@@ -19,11 +19,16 @@ export default function LoginPage() {
       if (error) {
         alert(error.message)
       } else {
-        const expiresAt = data.session?.expires_at
-        const expires = expiresAt ? new Date(expiresAt * 1000).toUTCString() : ''
-        const secure = location.protocol === 'https:' ? '; Secure' : ''
-        document.cookie = `sb-session=1; path=/; SameSite=Lax${secure}${expires ? `; expires=${expires}` : ''}`
-        window.location.href = '/manager'
+        // Set the session cookie via a server response (Set-Cookie header) so it
+        // is reliably committed before navigation — avoids the document.cookie
+        // race on mobile Safari.
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expiresAt: data.session?.expires_at }),
+        })
+        const from = new URLSearchParams(window.location.search).get('from')
+        window.location.href = from && from.startsWith('/') ? from : '/manager'
       }
     } finally {
       setLoading(false)

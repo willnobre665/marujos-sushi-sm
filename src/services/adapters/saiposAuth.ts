@@ -47,11 +47,19 @@ async function fetchNewToken(): Promise<string> {
   const { idPartner, secret } = getCredentials()
   const baseUrl = getBaseUrl()
 
-  const res = await fetch(`${baseUrl}/auth`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idPartner, secret }),
-  })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10_000)
+  let res: Response
+  try {
+    res = await fetch(`${baseUrl}/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idPartner, secret }),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!res.ok) {
     const body = await res.text()

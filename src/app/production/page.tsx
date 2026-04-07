@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import FinancePage from '@/app/finance/page'
-import CrmAutomacoesPage from '@/app/crm-automacoes/page'
+import { RemarketingPanel } from '@/app/remarketing/RemarketingPanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -671,7 +671,7 @@ export default function ProductionPage() {
       {/* Tab content */}
       {tab === 'kitchen'     && <KitchenPanel />}
       {tab === 'finance'     && <FinancePage />}
-      {tab === 'remarketing' && <CrmAutomacoesPage />}
+      {tab === 'remarketing' && <RemarketingPanel />}
 
     </div>
   )

@@ -90,7 +90,6 @@ async function postBatch(events: CrmEvent[]): Promise<string[]> {
   if (!ENDPOINT) return []   // no endpoint → skip silently (mock mode)
 
   const body = JSON.stringify({ events })
-  console.log('[CRM sync] POST payload:', body)
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
